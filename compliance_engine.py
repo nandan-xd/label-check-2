@@ -192,6 +192,68 @@ def normalize_field_name(field):
 
 
 # ============================================================
+# DATA-FIELD RESOLUTION
+# ============================================================
+#
+# The `field` column in legal_rules holds a human-readable rule
+# title (e.g. "Manufacturer / packer / importer name and address"),
+# not the key used in the extracted structured data. Looking it up
+# directly (via normalize_field_name) almost never matches the
+# extractor's schema, which forces every such rule into "review"
+# even when the data was actually detected.
+#
+# The `engine_check` column already carries the machine-readable
+# key that lines up with the Gemini extraction schema. Prefer that
+# for resolving which structured-data field a rule is about, and
+# only fall back to the title-based guess for anything with no
+# direct data equivalent (packaging/procedural rules that aren't
+# extractable from OCR text at all).
+
+STRUCTURED_DATA_FIELDS = {
+    "product_name", "category", "mrp", "net_quantity",
+    "manufacturing_date", "expiry_or_best_before", "batch_number",
+    "manufacturer", "packer", "importer", "consumer_care",
+    "country_of_origin", "unit_sale_price", "fssai_license_number",
+}
+
+# engine_check values that don't map 1:1 to a schema key but should
+# resolve against a specific field (or set of fields) anyway.
+ENGINE_CHECK_ALIASES = {
+    "manufacturer_packer_importer": "manufacturer_packer_importer",
+}
+
+
+def resolve_data_field(rule):
+    engine_check = (rule.get("engine_check") or "").strip().lower()
+
+    if engine_check in STRUCTURED_DATA_FIELDS:
+        return engine_check
+
+    if engine_check in ENGINE_CHECK_ALIASES:
+        return ENGINE_CHECK_ALIASES[engine_check]
+
+    # No direct structured-data equivalent (e.g. font size, package
+    # presentation, registration, enforcement/procedural rules) -
+    # fall back to the old title-based guess so behavior for those
+    # is unchanged.
+    return normalize_field_name(rule.get("field"))
+
+
+def get_manufacturer_packer_importer(data):
+    """
+    'Manufacturer / packer / importer' is satisfied by any one of the
+    three being declared, so check all three and return whichever is
+    present.
+    """
+    for key in ("manufacturer", "packer", "importer"):
+        value = get_field(data, key)
+        status = get_field_status(data, key)
+        if value is not None and str(value).strip() != "":
+            return value, status
+    return None, "not_found"
+
+
+# ============================================================
 # RESULT BUILDER
 # ============================================================
 
@@ -213,7 +275,7 @@ def build_result(rule, field, status, value, details):
 # ============================================================
 
 def check_rule(rule, structured_data):
-    field = normalize_field_name(rule.get("field"))
+    field = resolve_data_field(rule)
 
     requirement_type = (
         rule.get("requirement_type") or ""
@@ -231,18 +293,22 @@ def check_rule(rule, structured_data):
         rule.get("engine_check") or ""
     ).strip().lower()
 
-    value = get_field(structured_data, field)
-    status = get_field_status(structured_data, field)
+    if field == "manufacturer_packer_importer":
+        value, status = get_manufacturer_packer_importer(structured_data)
+    else:
+        value = get_field(structured_data, field)
+        status = get_field_status(structured_data, field)
 
     # --------------------------------------------------------
     # Missing field
     # --------------------------------------------------------
 
     if value is None or str(value).strip() == "":
+        requirement_type_normalized = requirement_type.replace("_", " ")
         conditional = (
-            "conditional" in requirement_type
-            or "where applicable" in requirement_type
-            or "if applicable" in requirement_type
+            "conditional" in requirement_type_normalized
+            or "where applicable" in requirement_type_normalized
+            or "if applicable" in requirement_type_normalized
             or bool(exception)
         )
 
