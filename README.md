@@ -1,105 +1,48 @@
-import os
-import requests
-import time
-from dotenv import load_dotenv
+# LabelCheck
 
+LabelCheck is a Flask-based product-label scanning and compliance verification application.
 
-load_dotenv()
+## Overview
 
+The application allows users to capture or upload product-label images and processes them through:
 
-OCR_API_KEY = os.getenv("OCR_API_KEY")
+- OCR-based text extraction
+- Gemini-powered structured product information extraction
+- Legal Metrology rule checks using PostgreSQL
+- Advanced FSSAI license-number format validation
+- AI-based visual legibility screening
+- PDF compliance report generation
 
+The application supports multiple images of the same product so that information printed on different sides, seals, caps, stickers or other areas can be considered together.
 
-def extract_text(image_file):
-    if not OCR_API_KEY:
-        raise ValueError("OCR_API_KEY is not configured.")
+## Technology Stack
 
-    image_file.seek(0)
+- Python
+- Flask
+- OCR.space API
+- Google Gemini API
+- PostgreSQL
+- Neon
+- ReportLab
+- Gunicorn
+- HTML / CSS / JavaScript
 
-    file_content = image_file.read()
+## Database
 
-    max_retries = 3
+The compliance rules are stored in a PostgreSQL table named:
 
-    for attempt in range(max_retries):
+`legal_rules`
 
-        try:
-            files = {
-                "file": (
-                    image_file.filename,
-                    file_content,
-                    image_file.mimetype or "image/jpeg"
-                )
-            }
+The application reads the rules from the database using the `DATABASE_URL` environment variable.
 
-            data = {
-                "apikey": OCR_API_KEY,
-                "language": "eng",
-                "isOverlayRequired": "false",
-                "OCREngine": "2"
-            }
+The current rule database focuses on the Packaged Commodities scope of Legal Metrology.
 
-            response = requests.post(
-                "https://api.ocr.space/parse/image",
-                files=files,
-                data=data,
-                timeout=30
-            )
+## Environment Variables
 
-            # Temporary OCR.space problem
-            if response.status_code == 503:
+Configure these variables locally or in the deployment platform:
 
-                if attempt < max_retries - 1:
-                    time.sleep(2 * (attempt + 1))
-                    continue
-
-                raise ValueError(
-                    "OCR service is temporarily unavailable. "
-                    "Please try again in a few seconds."
-                )
-
-            response.raise_for_status()
-
-            result = response.json()
-
-            if result.get("IsErroredOnProcessing"):
-                raise ValueError(
-                    str(
-                        result.get(
-                            "ErrorMessage",
-                            "OCR processing failed."
-                        )
-                    )
-                )
-
-            parsed_results = result.get(
-                "ParsedResults",
-                []
-            )
-
-            if not parsed_results:
-                return ""
-
-            text_parts = []
-
-            for parsed_result in parsed_results:
-                text = parsed_result.get(
-                    "ParsedText",
-                    ""
-                )
-
-                if text:
-                    text_parts.append(text)
-
-            return "\n".join(text_parts)
-
-        except requests.RequestException as e:
-
-            if attempt < max_retries - 1:
-                time.sleep(2 * (attempt + 1))
-                continue
-
-            raise ValueError(
-                f"OCR service unavailable: {e}"
-            ) from e
-
-    return ""
+```text
+OCR_API_KEY=your_ocr_api_key
+GEMINI_API_KEY=your_gemini_api_key
+GEMINI_MODEL=gemini-3.6-flash
+DATABASE_URL=your_neon_postgresql_connection_string

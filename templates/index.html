@@ -5,84 +5,434 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LabelCheck</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
+        :root {
+            --cream: #f4f1e8;
+            --paper: #fffdf7;
+            --blue: #4169a1;
+            --blue-dark: #315487;
+            --orange: #dc7832;
+            --orange-light: #f0a66e;
+            --black: #111111;
+            --gray: #686868;
+            --line: #d6d1c6;
+            --green: #287a4b;
+            --red: #b42318;
+            --amber: #9a5b00;
+        }
+
         * {
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
             margin: 0;
-            font-family: Arial, sans-serif;
-            background: #f5f7fb;
-            color: #1f2937;
+            background:
+                radial-gradient(circle at 10% 5%, rgba(65, 105, 161, 0.07), transparent 24%),
+                radial-gradient(circle at 90% 20%, rgba(220, 120, 50, 0.07), transparent 22%),
+                var(--cream);
+            color: var(--black);
+            font-family: "JetBrains Mono", monospace;
+            font-size: 12px;
         }
 
         .container {
-            max-width: 1100px;
-            margin: 35px auto;
-            padding: 20px;
+            width: min(1120px, calc(100% - 34px));
+            margin: 0 auto;
+            padding: 32px 0 70px;
         }
 
-        h1 {
+        /* =========================
+           TOP BAR
+        ========================= */
+
+        .topbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 34px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-mark {
+            width: 38px;
+            height: 38px;
+            background: var(--blue);
+            border: 2px solid var(--black);
+            position: relative;
+        }
+
+        .logo-mark::before {
+            content: "";
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border: 2px solid white;
+            top: 9px;
+            left: 9px;
+        }
+
+        .logo-mark::after {
+            content: "";
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background: var(--orange);
+            right: 4px;
+            bottom: 4px;
+        }
+
+        .logo-name {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.8px;
+        }
+
+        .logo-sub {
+            margin-top: 3px;
+            color: var(--gray);
+            font-size: 8px;
+            letter-spacing: 0.7px;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            border: 2px solid var(--black);
+            padding: 8px 11px;
+            background: var(--paper);
+            font-size: 8px;
+            font-weight: 700;
+        }
+
+        .status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--green);
+            box-shadow: 0 0 0 3px rgba(40, 122, 75, 0.12);
+        }
+
+        /* =========================
+           HERO
+        ========================= */
+
+        .hero {
+            display: grid;
+            grid-template-columns: 1.35fr 0.65fr;
+            gap: 18px;
+            margin-bottom: 30px;
+        }
+
+        .hero-main {
+            background: var(--paper);
+            border: 2px solid var(--black);
+            padding: 28px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 6px 6px 0 var(--blue);
+        }
+
+        .hero-main::after {
+            content: "";
+            position: absolute;
+            width: 130px;
+            height: 130px;
+            right: -60px;
+            top: -60px;
+            border: 2px solid var(--orange);
+            transform: rotate(45deg);
+        }
+
+        .eyebrow {
+            display: inline-block;
+            color: var(--blue);
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            margin-bottom: 14px;
+        }
+
+        .hero h1 {
             margin: 0;
+            font-size: 32px;
+            line-height: 1.05;
+            letter-spacing: -1.7px;
         }
 
-        h2 {
-            margin-top: 0;
+        .hero h1 span {
+            color: var(--blue);
         }
 
-        .subtitle {
-            color: #6b7280;
-            margin: 8px 0 28px;
+        .hero-description {
+            max-width: 650px;
+            margin: 15px 0 0;
+            color: var(--gray);
+            font-size: 10px;
+            line-height: 1.8;
         }
+
+        .hero-side {
+            background: var(--black);
+            color: white;
+            border: 2px solid var(--black);
+            padding: 22px;
+            position: relative;
+        }
+
+        .hero-side-label {
+            color: var(--orange-light);
+            font-size: 8px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .hero-side-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            padding: 11px 0;
+            border-bottom: 1px solid #373737;
+            font-size: 8px;
+        }
+
+        .hero-side-row:last-child {
+            border-bottom: 0;
+        }
+
+        .hero-side-row span:last-child {
+            color: #dddddd;
+            text-align: right;
+        }
+
+        /* =========================
+           SECTION CARD
+        ========================= */
 
         .card {
-            background: white;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 22px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+            background: var(--paper);
+            border: 2px solid var(--black);
+            padding: 22px;
+            margin-bottom: 24px;
+            box-shadow: 5px 5px 0 rgba(17, 17, 17, 0.95);
         }
 
+        .section-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            margin-bottom: 18px;
+        }
+
+        .section-left {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+
+        .section-number {
+            min-width: 31px;
+            height: 31px;
+            display: grid;
+            place-items: center;
+            background: var(--orange);
+            border: 2px solid var(--black);
+            font-size: 9px;
+            font-weight: 700;
+        }
+
+        .section-title {
+            margin: 0;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .section-subtitle {
+            margin-top: 5px;
+            color: var(--gray);
+            font-size: 8px;
+        }
+
+        .section-tag {
+            border: 1px solid var(--black);
+            padding: 6px 8px;
+            background: var(--cream);
+            font-size: 7px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        /* =========================
+           UPLOAD AREA
+        ========================= */
+
         .upload-area {
-            border: 2px dashed #d1d5db;
-            border-radius: 10px;
-            padding: 30px;
+            border: 2px dashed var(--blue);
+            background:
+                linear-gradient(135deg, rgba(65, 105, 161, 0.035) 25%, transparent 25%) 0 0 / 18px 18px,
+                var(--cream);
+            padding: 35px 25px;
             text-align: center;
+            position: relative;
+        }
+
+        .scan-frame {
+            width: 54px;
+            height: 54px;
+            margin: 0 auto 17px;
+            border: 3px solid var(--blue);
+            position: relative;
+        }
+
+        .scan-frame::before,
+        .scan-frame::after {
+            content: "";
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-color: var(--orange);
+        }
+
+        .scan-frame::before {
+            top: -5px;
+            left: -5px;
+            border-top: 3px solid;
+            border-left: 3px solid;
+        }
+
+        .scan-frame::after {
+            right: -5px;
+            bottom: -5px;
+            border-right: 3px solid;
+            border-bottom: 3px solid;
+        }
+
+        .upload-title {
+            margin: 0;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .upload-description {
+            max-width: 600px;
+            margin: 8px auto 0;
+            color: var(--gray);
+            font-size: 9px;
+            line-height: 1.7;
         }
 
         .upload-buttons {
             display: flex;
-            gap: 12px;
             justify-content: center;
             flex-wrap: wrap;
-            margin: 18px 0;
+            gap: 10px;
+            margin: 22px 0 0;
         }
 
         button,
         .button {
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
+            border: 2px solid var(--black);
+            border-radius: 0;
+            padding: 11px 17px;
             cursor: pointer;
-            font-size: 15px;
+            font-family: "JetBrains Mono", monospace;
+            font-size: 9px;
+            font-weight: 700;
             text-decoration: none;
-            display: inline-block;
-        }
-
-        .primary {
-            background: #111827;
-            color: white;
-        }
-
-        .secondary {
-            background: #e5e7eb;
-            color: #111827;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            transition: 0.15s ease;
         }
 
         button:hover,
         .button:hover {
-            opacity: 0.9;
+            transform: translate(-2px, -2px);
+            box-shadow: 4px 4px 0 var(--black);
+        }
+
+        .primary {
+            background: var(--blue);
+            color: white;
+        }
+
+        .primary:hover {
+            background: var(--blue-dark);
+        }
+
+        .secondary {
+            background: var(--paper);
+            color: var(--black);
+        }
+
+        .secondary:hover {
+            background: var(--orange);
+        }
+
+        .scan-submit {
+            min-width: 190px;
+            padding: 13px 20px;
+            background: var(--blue);
+            color: white;
+            font-size: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        .scan-submit:not(:disabled) {
+            box-shadow: 5px 5px 0 var(--orange);
+        }
+
+        .scan-submit:not(:disabled):hover {
+            background: var(--orange);
+            color: var(--black);
+            box-shadow: 5px 5px 0 var(--black);
+        }
+
+        .scan-submit:disabled {
+            background: #d8d4ca;
+            color: #8a877f;
+            border-color: #aaa69d;
+            cursor: not-allowed;
+        }
+
+        .submit-area {
+            text-align: center;
+            padding-top: 20px;
+        }
+
+        .hint {
+            max-width: 700px;
+            margin: 20px auto 0;
+            padding: 11px 14px;
+            background: var(--paper);
+            border: 1px solid var(--line);
+            color: var(--gray);
+            text-align: left;
+            font-size: 8px;
+            line-height: 1.7;
+        }
+
+        .hint strong {
+            color: var(--blue);
         }
 
         #cameraInput,
@@ -90,333 +440,1124 @@
             display: none;
         }
 
+        /* =========================
+           PREVIEWS
+        ========================= */
+
         .preview-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 13px;
+            margin-top: 18px;
         }
 
         .preview-item {
             position: relative;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 8px;
-            background: #fafafa;
+            background: var(--cream);
+            border: 2px solid var(--black);
+            padding: 7px;
         }
 
         .preview-item img {
             width: 100%;
-            height: 130px;
+            height: 150px;
+            display: block;
             object-fit: cover;
-            border-radius: 7px;
         }
 
         .preview-name {
-            font-size: 12px;
             margin-top: 7px;
+            color: var(--gray);
+            font-size: 8px;
+            line-height: 1.5;
             word-break: break-word;
-            color: #6b7280;
         }
 
         .remove-image {
             position: absolute;
-            top: 8px;
-            right: 8px;
+            top: 7px;
+            right: 7px;
             width: 27px;
             height: 27px;
             padding: 0;
-            border-radius: 50%;
-            background: #111827;
-            color: white;
-            font-size: 16px;
+            background: var(--orange);
+            color: var(--black);
         }
 
-        .hint {
-            margin-top: 15px;
-            background: #f9fafb;
-            padding: 13px;
-            border-radius: 8px;
-            color: #4b5563;
-            font-size: 14px;
-        }
+        /* =========================
+           ERROR
+        ========================= */
 
         .error {
-            background: #fee2e2;
-            color: #991b1b;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+            background: #fff1ee;
+            color: var(--red);
+            border: 2px solid var(--black);
+            border-left: 6px solid var(--red);
+            padding: 13px 15px;
+            margin-bottom: 25px;
+            line-height: 1.6;
         }
+
+        /* =========================
+           OCR
+        ========================= */
 
         .ocr-box,
         .json {
-            background: #111827;
-            color: #e5e7eb;
-            padding: 18px;
-            border-radius: 8px;
+            background: #151515;
+            color: #e8e8e8;
+            border: 2px solid var(--black);
+            padding: 17px;
             white-space: pre-wrap;
             overflow-x: auto;
             font-family: Consolas, monospace;
-            line-height: 1.5;
+            font-size: 9px;
+            line-height: 1.7;
+        }
+
+        /* =========================
+           TABLES
+        ========================= */
+
+        .table-wrap {
+            width: 100%;
+            overflow-x: auto;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
+            border: 2px solid var(--black);
+            background: var(--paper);
         }
 
         th,
         td {
-            padding: 12px;
-            border-bottom: 1px solid #e5e7eb;
+            padding: 10px;
+            border: 1px solid var(--black);
             text-align: left;
             vertical-align: top;
+            font-size: 8px;
+            line-height: 1.6;
         }
 
         th {
-            background: #f9fafb;
+            background: var(--blue);
+            color: white;
+            font-weight: 700;
+            white-space: nowrap;
         }
+
+        tr:nth-child(even) td {
+            background: #faf7ef;
+        }
+
+        /* =========================
+           STATUS
+        ========================= */
 
         .detected,
         .pass {
-            color: #166534;
-            font-weight: bold;
+            color: var(--green);
+            font-weight: 700;
         }
 
         .verify,
         .review {
-            color: #92400e;
-            font-weight: bold;
+            color: var(--amber);
+            font-weight: 700;
         }
 
         .fail {
-            color: #991b1b;
-            font-weight: bold;
+            color: var(--red);
+            font-weight: 700;
         }
 
         .not-found,
         .na {
-            color: #6b7280;
+            color: var(--gray);
+            font-weight: 700;
         }
 
-        .compliance-summary {
+        .status-banner {
             display: flex;
-            gap: 12px;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
             flex-wrap: wrap;
-            margin-bottom: 20px;
+            padding: 15px;
+            margin-bottom: 17px;
+            background: var(--cream);
+            border: 2px solid var(--black);
+            border-left: 6px solid var(--blue);
+        }
+
+        .status-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-pill {
+            padding: 7px 10px;
+            background: var(--orange);
+            color: var(--black);
+            border: 2px solid var(--black);
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        /* =========================
+           SUMMARY
+        ========================= */
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 17px 0;
         }
 
         .summary-box {
-            padding: 14px 18px;
-            border-radius: 9px;
-            background: #f9fafb;
+            background: var(--cream);
+            border: 2px solid var(--black);
+            padding: 12px;
+            position: relative;
+        }
+
+        .summary-box::after {
+            content: "";
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            right: 7px;
+            top: 7px;
+            background: var(--orange);
+        }
+
+        .summary-box strong {
+            display: block;
+            font-size: 19px;
+            line-height: 1;
+            margin-bottom: 7px;
+        }
+
+        .summary-box span {
+            color: var(--gray);
+            font-size: 7px;
+            font-weight: 700;
+            line-height: 1.5;
+            text-transform: uppercase;
+        }
+
+        .muted {
+            color: var(--gray);
+            line-height: 1.7;
+        }
+
+        /* =========================
+           ADVANCED CHECKS
+        ========================= */
+
+        .advanced-intro {
+            background: #f1ede3;
+            border-left: 5px solid var(--orange);
+            padding: 13px;
+            margin-bottom: 17px;
+            color: var(--gray);
+            font-size: 8px;
+            line-height: 1.7;
+        }
+
+        .advanced-check {
+            background: var(--paper);
+            border: 2px solid var(--black);
+            padding: 16px;
+            margin-bottom: 11px;
+        }
+
+        .advanced-check-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .advanced-check h3 {
+            margin: 0;
+            font-size: 10px;
+        }
+
+        .badge {
+            border: 2px solid var(--black);
+            padding: 5px 9px;
+            font-size: 7px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .badge.pass {
+            background: #e2f0e7;
+        }
+
+        .badge.fail {
+            background: #f9dfdc;
+        }
+
+        .badge.review {
+            background: #f5e8c9;
+        }
+
+        .badge.na {
+            background: #e9e9e9;
+        }
+
+        .advanced-check p {
+            margin: 11px 0;
+            font-size: 8px;
+            line-height: 1.7;
+        }
+
+        .method {
+            color: var(--gray);
+            font-size: 7px;
+            line-height: 1.6;
         }
 
         .report-actions {
-            margin-top: 20px;
+            margin-top: 18px;
         }
 
-        @media (max-width: 700px) {
+        .report-button {
+            background: var(--orange);
+            color: var(--black);
+        }
+
+        .report-button:hover {
+            background: var(--blue);
+            color: white;
+        }
+
+        /* =========================
+           FOOTER
+        ========================= */
+
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            color: var(--gray);
+            font-size: 7px;
+            padding: 8px 2px;
+        }
+
+        /* =========================
+           MOBILE
+        ========================= */
+
+        @media (max-width: 850px) {
+
+            .hero {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .preview-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 600px) {
+
             .container {
-                margin: 15px auto;
-                padding: 12px;
+                width: calc(100% - 22px);
+                padding-top: 20px;
+            }
+
+            .topbar {
+                align-items: flex-start;
+            }
+
+            .system-status {
+                display: none;
+            }
+
+            .hero-main {
+                padding: 22px;
+                box-shadow: 4px 4px 0 var(--blue);
+            }
+
+            .hero h1 {
+                font-size: 26px;
             }
 
             .card {
-                padding: 18px;
+                padding: 16px;
+                box-shadow: 4px 4px 0 var(--black);
+            }
+
+            .section-heading {
+                align-items: flex-start;
+            }
+
+            .section-tag {
+                display: none;
+            }
+
+            .preview-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .summary-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .advanced-check-head {
+                align-items: flex-start;
+                flex-direction: column;
             }
 
             th,
             td {
-                padding: 9px;
-                font-size: 13px;
+                padding: 8px;
+            }
+
+            .footer {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 
 <body>
+
 <div class="container">
 
-    <h1>LabelCheck</h1>
-    <div class="subtitle">Product label scanning and compliance verification</div>
+    <!-- =========================
+         HEADER
+    ========================= -->
+
+    <div class="topbar">
+
+        <div class="logo">
+
+            <div class="logo-mark"></div>
+
+            <div>
+                <div class="logo-name">LabelCheck</div>
+                <div class="logo-sub">
+                    LEGAL METROLOGY / LABEL INSPECTION
+                </div>
+            </div>
+
+        </div>
+
+        <div class="system-status">
+            <span class="status-dot"></span>
+            INSPECTION SYSTEM READY
+        </div>
+
+    </div>
+
+    <!-- =========================
+         HERO
+    ========================= -->
+
+    <div class="hero">
+
+        <div class="hero-main">
+
+            <div class="eyebrow">
+                PACKAGED COMMODITIES
+            </div>
+
+            <h1>
+                Inspect the label.<br>
+                <span>Verify the details.</span>
+            </h1>
+
+            <p class="hero-description">
+                Upload package images and LabelCheck extracts product information,
+                evaluates applicable Legal Metrology requirements and highlights
+                fields that require verification.
+            </p>
+
+        </div>
+
+        <div class="hero-side">
+
+            <div class="hero-side-label">
+                INSPECTION PIPELINE
+            </div>
+
+            <div class="hero-side-row">
+                <span>01</span>
+                <span>IMAGE CAPTURE</span>
+            </div>
+
+            <div class="hero-side-row">
+                <span>02</span>
+                <span>OCR EXTRACTION</span>
+            </div>
+
+            <div class="hero-side-row">
+                <span>03</span>
+                <span>FIELD ANALYSIS</span>
+            </div>
+
+            <div class="hero-side-row">
+                <span>04</span>
+                <span>RULE VERIFICATION</span>
+            </div>
+
+        </div>
+
+    </div>
 
     {% if error %}
+
     <div class="error">
-        <strong>Error:</strong> {{ error }}
+        <strong>ERROR:</strong> {{ error }}
     </div>
+
     {% endif %}
 
+    <!-- =========================
+         SCAN
+    ========================= -->
+
     <div class="card">
-        <h2>Scan Product</h2>
+
+        <div class="section-heading">
+
+            <div class="section-left">
+
+                <div class="section-number">
+                    01
+                </div>
+
+                <div>
+                    <h2 class="section-title">
+                        CAPTURE PRODUCT
+                    </h2>
+
+                    <div class="section-subtitle">
+                        Upload one or more clear package images
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="section-tag">
+                INPUT
+            </div>
+
+        </div>
 
         <form id="scanForm" method="POST" enctype="multipart/form-data">
+
             <div class="upload-area">
-                <p>Capture all sides of the package for better results.</p>
+
+                <div class="scan-frame"></div>
+
+                <p class="upload-title">
+                    ADD LABEL IMAGES
+                </p>
+
+                <p class="upload-description">
+                    Capture multiple sides when required.
+                    Keep text, MRP, quantity, dates and manufacturer details
+                    visible and in focus.
+                </p>
 
                 <div class="upload-buttons">
-                    <button type="button" class="primary" onclick="document.getElementById('cameraInput').click()">
-                        📷 Take Photo
+
+                    <button
+                        type="button"
+                        class="primary"
+                        onclick="document.getElementById('cameraInput').click()"
+                    >
+                        📷 TAKE PHOTO
                     </button>
 
-                    <button type="button" class="secondary" onclick="document.getElementById('fileInput').click()">
-                        🖼️ Upload Images
+                    <button
+                        type="button"
+                        class="secondary"
+                        onclick="document.getElementById('fileInput').click()"
+                    >
+                        🖼 UPLOAD IMAGES
                     </button>
+
                 </div>
 
-                <input id="cameraInput" type="file" accept="image/*" capture="environment">
-                <input id="fileInput" type="file" accept="image/*" multiple>
+                <input
+                    id="cameraInput"
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                >
+
+                <input
+                    id="fileInput"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                >
 
                 <div class="hint">
-                    💡 Check the <strong>bottom, seal, cap or another side</strong> of the package.
-                    MRP, batch number and dates may be printed there.
+                    <strong>BEST RESULT:</strong>
+                    Use clear, well-lit images. Include the front and back of
+                    the package when possible.
                 </div>
+
             </div>
 
             <div id="previewGrid" class="preview-grid"></div>
 
-            <div style="text-align:center; margin-top:20px;">
-                <button type="submit" class="primary" id="scanButton" disabled>
-                    Scan Label
+            <div class="submit-area">
+
+                <button
+                    type="submit"
+                    class="scan-submit"
+                    id="scanButton"
+                    disabled
+                >
+                    SCAN LABEL
                 </button>
+
             </div>
+
         </form>
+
     </div>
 
     {% if ocr_results %}
+
     <div class="card">
-        <h2>1. OCR Output</h2>
+
+        <div class="section-heading">
+
+            <div class="section-left">
+
+                <div class="section-number">
+                    02
+                </div>
+
+                <div>
+                    <h2 class="section-title">
+                        OCR OUTPUT
+                    </h2>
+
+                    <div class="section-subtitle">
+                        Text detected from uploaded images
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="section-tag">
+                EXTRACTION
+            </div>
+
+        </div>
 
         {% for item in ocr_results %}
+
         <h3>{{ item.filename }}</h3>
+
         <div class="ocr-box">{{ item.text }}</div>
+
         {% endfor %}
+
     </div>
+
     {% endif %}
 
     {% if structured_data %}
+
     <div class="card">
-        <h2>2. Extracted Product Information</h2>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>Field</th>
-                    <th>Value</th>
-                    <th>Status</th>
-                    <th>Evidence</th>
-                </tr>
-            </thead>
+        <div class="section-heading">
 
-            <tbody>
-            {% for field, result in structured_data.items() %}
-                <tr>
-                    <td><strong>{{ field.replace("_", " ").title() }}</strong></td>
-                    <td>{{ result.value or "NOT FOUND" }}</td>
+            <div class="section-left">
 
-                    <td>
-                        {% if result.status == "detected" %}
-                            <span class="detected">DETECTED</span>
-                        {% elif result.status == "needs_verification" %}
-                            <span class="verify">VERIFY</span>
-                        {% else %}
-                            <span class="not-found">NOT FOUND</span>
-                        {% endif %}
-                    </td>
+                <div class="section-number">
+                    03
+                </div>
 
-                    <td>{{ result.evidence or "-" }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                <div>
+                    <h2 class="section-title">
+                        EXTRACTED INFORMATION
+                    </h2>
+
+                    <div class="section-subtitle">
+                        Structured product fields identified from the label
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="section-tag">
+                PRODUCT DATA
+            </div>
+
+        </div>
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>FIELD</th>
+                        <th>VALUE</th>
+                        <th>STATUS</th>
+                        <th>EVIDENCE</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for field, result in structured_data.items() %}
+
+                    <tr>
+
+                        <td>
+                            <strong>
+                                {{ field.replace("_", " ").title() }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            {{ result.value or "NOT FOUND" }}
+                        </td>
+
+                        <td>
+
+                            {% if result.status == "detected" %}
+
+                                <span class="detected">
+                                    DETECTED
+                                </span>
+
+                            {% elif result.status == "needs_verification" %}
+
+                                <span class="verify">
+                                    VERIFY
+                                </span>
+
+                            {% else %}
+
+                                <span class="not-found">
+                                    NOT FOUND
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {{ result.evidence or "-" }}
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
     </div>
 
     {% if compliance_results %}
+
     <div class="card">
-        <h2>3. Compliance Results</h2>
 
-        {% if compliance_results.summary %}
-        <div class="hint">
-            {{ compliance_results.summary }}
+        <div class="section-heading">
+
+            <div class="section-left">
+
+                <div class="section-number">
+                    04
+                </div>
+
+                <div>
+                    <h2 class="section-title">
+                        COMPLIANCE RESULTS
+                    </h2>
+
+                    <div class="section-subtitle">
+                        Applicable Legal Metrology rule evaluation
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="section-tag">
+                COMPLIANCE
+            </div>
+
         </div>
-        {% endif %}
 
-        {% set checks = compliance_results.checks or [] %}
+        <div class="status-banner">
 
-        <div class="compliance-summary">
-            {% set pass_count = checks | selectattr("status", "equalto", "pass") | list | length %}
-            {% set fail_count = checks | selectattr("status", "equalto", "fail") | list | length %}
-            {% set review_count = checks | selectattr("status", "equalto", "review") | list | length %}
-            {% set na_count = checks | selectattr("status", "equalto", "not_applicable") | list | length %}
+            <div>
 
-            <div class="summary-box"><strong>{{ pass_count }}</strong> Passed</div>
-            <div class="summary-box"><strong>{{ fail_count }}</strong> Failed</div>
-            <div class="summary-box"><strong>{{ review_count }}</strong> Review</div>
-            <div class="summary-box"><strong>{{ na_count }}</strong> Not Applicable</div>
+                <div class="status-title">
+                    {{ compliance_results.overall_status.replace("_", " ") }}
+                </div>
+
+                <div class="muted">
+                    {{ compliance_results.summary }}
+                </div>
+
+            </div>
+
+            <div class="status-pill">
+                {{ compliance_results.category }}
+            </div>
+
         </div>
 
-        {% if checks %}
-        <table>
-            <thead>
-                <tr>
-                    <th>Rule / Field</th>
-                    <th>Status</th>
-                    <th>Details</th>
-                </tr>
-            </thead>
+        <div class="summary-grid">
 
-            <tbody>
-            {% for check in checks %}
-                <tr>
-                    <td>
-                        <strong>{{ check.rule or check.field or "Rule" }}</strong>
-                    </td>
+            <div class="summary-box">
+                <strong>{{ compliance_results.passed }}</strong>
+                <span>Passed</span>
+            </div>
 
-                    <td>
-                        {% if check.status == "pass" %}
-                            <span class="pass">PASS</span>
-                        {% elif check.status == "fail" %}
-                            <span class="fail">FAIL</span>
-                        {% elif check.status == "review" %}
-                            <span class="review">REVIEW</span>
-                        {% else %}
-                            <span class="na">{{ check.status | upper }}</span>
-                        {% endif %}
-                    </td>
+            <div class="summary-box">
+                <strong>{{ compliance_results.failed }}</strong>
+                <span>Failed</span>
+            </div>
 
-                    <td>{{ check.details or check.message or "-" }}</td>
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+            <div class="summary-box">
+                <strong>{{ compliance_results.review }}</strong>
+                <span>Review</span>
+            </div>
+
+            <div class="summary-box">
+                <strong>{{ compliance_results.not_applicable }}</strong>
+                <span>Not Applicable</span>
+            </div>
+
+        </div>
+
+        <p class="muted">
+            {{ compliance_results.applicable_rules }}
+            applicable checks out of
+            {{ compliance_results.total_rules }}
+            configured rules.
+        </p>
+
+        {% if compliance_results.checks %}
+
+        <div class="table-wrap">
+
+            <table>
+
+                <thead>
+
+                    <tr>
+                        <th>RULE / FIELD</th>
+                        <th>STATUS</th>
+                        <th>DETAILS</th>
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                {% for check in compliance_results.checks %}
+
+                    <tr>
+
+                        <td>
+                            <strong>
+                                {{ check.rule or check.field or "Rule" }}
+                            </strong>
+                        </td>
+
+                        <td>
+
+                            {% if check.status == "pass" %}
+
+                                <span class="pass">
+                                    PASS
+                                </span>
+
+                            {% elif check.status == "fail" %}
+
+                                <span class="fail">
+                                    FAIL
+                                </span>
+
+                            {% elif check.status == "review" %}
+
+                                <span class="review">
+                                    REVIEW
+                                </span>
+
+                            {% else %}
+
+                                <span class="na">
+                                    {{ check.status
+                                       | replace("_", " ")
+                                       | upper }}
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {{ check.details or check.message or "-" }}
+                        </td>
+
+                    </tr>
+
+                {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
         {% else %}
-            <p>No compliance checks were generated.</p>
+
+        <p class="muted">
+            No compliance checks were generated.
+        </p>
+
         {% endif %}
+
     </div>
+
+    {% endif %}
+
+    {% if advanced_results %}
+
+    <div class="card">
+
+        <div class="section-heading">
+
+            <div class="section-left">
+
+                <div class="section-number">
+                    05
+                </div>
+
+                <div>
+                    <h2 class="section-title">
+                        ADVANCED VERIFICATIONS
+                    </h2>
+
+                    <div class="section-subtitle">
+                        Additional statutory and database-backed checks
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="section-tag">
+                ADVANCED
+            </div>
+
+        </div>
+
+        <div class="advanced-intro">
+            These checks are separate from the Legal Metrology rule table.
+            Results requiring physical or visual verification are identified
+            accordingly.
+        </div>
+
+        <div class="summary-grid">
+
+            <div class="summary-box">
+                <strong>{{ advanced_results.passed }}</strong>
+                <span>Passed</span>
+            </div>
+
+            <div class="summary-box">
+                <strong>{{ advanced_results.failed }}</strong>
+                <span>Failed</span>
+            </div>
+
+            <div class="summary-box">
+                <strong>{{ advanced_results.review }}</strong>
+                <span>Require Verification</span>
+            </div>
+
+            <div class="summary-box">
+                <strong>{{ advanced_results.not_applicable }}</strong>
+                <span>Not Applicable</span>
+            </div>
+
+        </div>
+
+        <p class="muted">
+            {{ advanced_results.summary }}
+        </p>
+
+        {% for check in advanced_results.checks %}
+
+        <div class="advanced-check">
+
+            <div class="advanced-check-head">
+
+                <h3>
+                    {{ check.rule or check.field or "Verification" }}
+                </h3>
+
+                {% if check.status == "pass" %}
+
+                    <span class="badge pass">
+                        PASS
+                    </span>
+
+                {% elif check.status == "fail" %}
+
+                    <span class="badge fail">
+                        FAIL
+                    </span>
+
+                {% elif check.status == "review" %}
+
+                    <span class="badge review">
+                        REVIEW
+                    </span>
+
+                {% else %}
+
+                    <span class="badge na">
+                        {{ check.status
+                           | replace("_", " ")
+                           | upper }}
+                    </span>
+
+                {% endif %}
+
+            </div>
+
+            <p>
+                {{ check.details }}
+            </p>
+
+            <div class="method">
+                METHOD:
+                {{ check.verification_method
+                   | replace("_", " ") }}
+            </div>
+
+        </div>
+
+        {% endfor %}
+
+    </div>
+
     {% endif %}
 
     <div class="card">
-        <h2>4. Structured JSON</h2>
+
+        <div class="section-heading">
+
+            <div class="section-left">
+
+                <div class="section-number">
+                    06
+                </div>
+
+                <div>
+                    <h2 class="section-title">
+                        STRUCTURED OUTPUT
+                    </h2>
+
+                    <div class="section-subtitle">
+                        Machine-readable inspection data
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="section-tag">
+                JSON
+            </div>
+
+        </div>
+
         <div class="json">{{ structured_data | tojson(indent=2) }}</div>
+
     </div>
 
     <div class="card">
-        <h2>5. Report</h2>
 
-        <p>
-            Generate a report containing the extracted product information
-            and compliance results.
+        <div class="section-heading">
+
+            <div class="section-left">
+
+                <div class="section-number">
+                    07
+                </div>
+
+                <div>
+                    <h2 class="section-title">
+                        INSPECTION REPORT
+                    </h2>
+
+                    <div class="section-subtitle">
+                        Export the completed inspection
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="section-tag">
+                PDF
+            </div>
+
+        </div>
+
+        <p class="muted">
+            Generate a PDF containing the extracted product information,
+            compliance evaluation and advanced verification results.
         </p>
 
         <div class="report-actions">
-            <a href="{{ url_for('download_report') }}" class="button primary">
-                📄 Download PDF Report
+
+            <a
+                href="{{ url_for('download_report') }}"
+                class="button report-button"
+            >
+                📄 DOWNLOAD PDF REPORT
             </a>
+
         </div>
+
     </div>
 
     {% endif %}
+
+    <div class="footer">
+
+        <span>
+            LABELCHECK / PACKAGED COMMODITY INSPECTION
+        </span>
+
+        <span>
+            LEGAL METROLOGY ASSISTANCE SYSTEM
+        </span>
+
+    </div>
 
 </div>
 
@@ -431,62 +1572,92 @@
 
     function addFiles(files) {
         for (const file of files) {
+
             if (file.type.startsWith("image/")) {
                 selectedFiles.push(file);
             }
+
         }
 
         renderPreviews();
     }
 
     cameraInput.addEventListener("change", function () {
+
         addFiles(this.files);
+
         this.value = "";
+
     });
 
     fileInput.addEventListener("change", function () {
+
         addFiles(this.files);
+
         this.value = "";
+
     });
 
     function renderPreviews() {
+
         previewGrid.innerHTML = "";
 
         selectedFiles.forEach((file, index) => {
+
             const item = document.createElement("div");
+
             item.className = "preview-item";
 
             const image = document.createElement("img");
+
             image.src = URL.createObjectURL(file);
 
             const name = document.createElement("div");
+
             name.className = "preview-name";
+
             name.textContent = file.name;
 
             const removeButton = document.createElement("button");
+
             removeButton.type = "button";
+
             removeButton.className = "remove-image";
+
             removeButton.innerHTML = "×";
 
             removeButton.onclick = function () {
+
                 selectedFiles.splice(index, 1);
+
                 renderPreviews();
+
             };
 
             item.appendChild(image);
+
             item.appendChild(removeButton);
+
             item.appendChild(name);
+
             previewGrid.appendChild(item);
+
         });
 
         scanButton.disabled = selectedFiles.length === 0;
+
     }
 
     scanForm.addEventListener("submit", function (event) {
+
         if (selectedFiles.length === 0) {
+
             event.preventDefault();
+
             alert("Please add at least one image.");
+
             return;
+
         }
 
         event.preventDefault();
@@ -494,11 +1665,14 @@
         const formData = new FormData();
 
         selectedFiles.forEach(file => {
+
             formData.append("images", file);
+
         });
 
         scanButton.disabled = true;
-        scanButton.textContent = "Scanning...";
+
+        scanButton.textContent = "SCANNING...";
 
         fetch("/", {
             method: "POST",
@@ -506,17 +1680,26 @@
         })
         .then(response => response.text())
         .then(html => {
+
             document.open();
+
             document.write(html);
+
             document.close();
+
         })
         .catch(() => {
+
             alert("Something went wrong while scanning.");
+
             scanButton.disabled = false;
-            scanButton.textContent = "Scan Label";
+
+            scanButton.textContent = "SCAN LABEL";
+
         });
+
     });
 </script>
 
 </body>
-</html>
+</html> 
