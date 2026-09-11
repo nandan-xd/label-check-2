@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LabelCheck</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#1f2937}
+.container{max-width:1100px;margin:40px auto;padding:20px}
+h1{margin-bottom:8px}.subtitle{color:#6b7280;margin-bottom:30px}
+.card{background:#fff;border-radius:12px;padding:24px;margin-bottom:24px;box-shadow:0 2px 10px rgba(0,0,0,.06)}
+input[type=file]{margin:15px 0}
+button{background:#111827;color:#fff;border:0;padding:12px 22px;border-radius:8px;cursor:pointer;font-size:15px}
+button:hover{background:#374151}
+.error{background:#fee2e2;color:#991b1b;padding:15px;border-radius:8px;margin-bottom:20px}
+.ocr-box,.json{background:#111827;color:#e5e7eb;padding:20px;border-radius:8px;white-space:pre-wrap;overflow-x:auto;font-family:Consolas,monospace;line-height:1.5}
+table{width:100%;border-collapse:collapse}
+th,td{padding:12px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}
+th{background:#f9fafb}
+.detected{color:#166534;font-weight:bold}
+.verify{color:#92400e;font-weight:bold}
+.not-found{color:#6b7280}
+.pass{color:#166534;font-weight:bold}
+.fail{color:#991b1b;font-weight:bold}
+.warning{color:#92400e;font-weight:bold}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<h1>LabelCheck</h1>
+<div class="subtitle">OCR → Gemini → Compliance Engine</div>
+
+{% if error %}
+<div class="error"><strong>Error:</strong> {{ error }}</div>
+{% endif %}
+
+<div class="card">
+<h2>Scan Product</h2>
+<form method="POST" enctype="multipart/form-data">
+<input type="file" name="images" accept="image/*" multiple required>
+<br>
+<button type="submit">Scan Label</button>
+</form>
+</div>
+
+{% if ocr_results %}
+<div class="card">
+<h2>1. Raw OCR Output</h2>
+{% for item in ocr_results %}
+<h3>{{ item.filename }}</h3>
+<div class="ocr-box">{{ item.text }}</div>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if structured_data %}
+<div class="card">
+<h2>2. Gemini Structured Extraction</h2>
+<table>
+<thead><tr><th>Field</th><th>Value</th><th>Status</th><th>Evidence</th></tr></thead>
+<tbody>
+{% for field,result in structured_data.items() %}
+<tr>
+<td><strong>{{ field.replace("_"," ").title() }}</strong></td>
+<td>{{ result.value or "NOT FOUND" }}</td>
+<td>
+{% if result.status=="detected" %}
+<span class="detected">DETECTED</span>
+{% elif result.status=="needs_verification" %}
+<span class="verify">VERIFY</span>
+{% else %}
+<span class="not-found">NOT FOUND</span>
+{% endif %}
+</td>
+<td>{{ result.evidence or "-" }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<div class="card">
+<h2>3. JSON Output</h2>
+<div class="json">{{ structured_data | tojson(indent=2) }}</div>
+</div>
+{% endif %}
+
+{% if compliance_results %}
+<div class="card">
+<h2>4. Compliance Results</h2>
+
+{% if compliance_results is mapping %}
+
+<table>
+<thead><tr><th>Rule / Field</th><th>Status</th><th>Details</th></tr></thead>
+<tbody>
+{% for rule,result in compliance_results.items() %}
+<tr>
+<td><strong>{{ rule.replace("_"," ").title() }}</strong></td>
+<td>
+{% if result is mapping %}
+{% set status=result.get("status","")|lower %}
+{% if status in ["pass","compliant","detected"] %}
+<span class="pass">{{ result.get("status")|upper }}</span>
+{% elif status in ["fail","non_compliant","non-compliant"] %}
+<span class="fail">{{ result.get("status")|upper }}</span>
+{% elif status in ["warning","needs_verification","verify"] %}
+<span class="warning">{{ result.get("status")|upper }}</span>
+{% else %}
+{{ result.get("status","-") }}
+{% endif %}
+{% else %}
+{{ result }}
+{% endif %}
+</td>
+<td>
+{% if result is mapping %}
+{{ result.get("message",result.get("reason",result.get("details","-"))) }}
+{% else %}
+-
+{% endif %}
+</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+{% else %}
+<div class="json">{{ compliance_results | tojson(indent=2) }}</div>
+{% endif %}
+
+</div>
+{% endif %}
+
+</div>
+</body>
+</html>
