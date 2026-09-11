@@ -1,5 +1,4 @@
 from flask import (Flask,render_template,request)
-from matplotlib import category
 
 from ocr_service import extract_text
 from gemini_extractor import extract_structured_data
