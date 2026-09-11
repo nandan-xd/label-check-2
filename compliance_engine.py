@@ -1,7 +1,9 @@
 import os
 import psycopg2
 from dotenv import load_dotenv
+
 load_dotenv()
+
 
 # ============================================================
 # DATABASE
@@ -21,71 +23,37 @@ def get_db_connection():
 # ============================================================
 
 def load_rules(category=None):
-    """
-    Loads compliance rules from the legal_rules table.
-
-    Actual Neon schema:
-
-        rule_id
-        product_category
-        field
-        requirement
-        requirement_type
-        exception_condition
-        applicable_section
-        engine_check
-        source_notes
-    """
-
     conn = get_db_connection()
 
     try:
         cursor = conn.cursor()
 
+        query = """
+            SELECT
+                rule_id,
+                product_category,
+                field,
+                requirement,
+                requirement_type,
+                exception_condition,
+                applicable_section,
+                engine_check,
+                source_notes
+            FROM legal_rules
+        """
+
         if category:
-            query = """
-                SELECT
-                    rule_id,
-                    product_category,
-                    field,
-                    requirement,
-                    requirement_type,
-                    exception_condition,
-                    applicable_section,
-                    engine_check,
-                    source_notes
-                FROM legal_rules
-                WHERE LOWER(product_category) = LOWER(%s)
-                ORDER BY rule_id
-            """
-
+            query += " WHERE LOWER(product_category) = LOWER(%s)"
+            query += " ORDER BY rule_id"
             cursor.execute(query, (category,))
-
         else:
-            query = """
-                SELECT
-                    rule_id,
-                    product_category,
-                    field,
-                    requirement,
-                    requirement_type,
-                    exception_condition,
-                    applicable_section,
-                    engine_check,
-                    source_notes
-                FROM legal_rules
-                ORDER BY rule_id
-            """
-
+            query += " ORDER BY rule_id"
             cursor.execute(query)
 
         rows = cursor.fetchall()
 
-        rules = []
-
-        for row in rows:
-
-            rules.append({
+        return [
+            {
                 "rule_id": row[0],
                 "product_category": row[1],
                 "field": row[2],
@@ -95,9 +63,9 @@ def load_rules(category=None):
                 "applicable_section": row[6],
                 "engine_check": row[7],
                 "source_notes": row[8]
-            })
-
-        return rules
+            }
+            for row in rows
+        ]
 
     finally:
         conn.close()
@@ -108,23 +76,6 @@ def load_rules(category=None):
 # ============================================================
 
 def normalize_category(category):
-    """
-    Gemini may identify a practical product category such as:
-
-        personal_care
-        cosmetic
-        food
-        beverage
-        household
-        etc.
-
-    Our current legal database is based on
-    Packaged Commodities rules.
-
-    Therefore these products are currently evaluated
-    against the Packaged Commodities rule set.
-    """
-
     if not category:
         return "Packaged Commodities"
 
@@ -143,13 +94,11 @@ def normalize_category(category):
         "packaged_goods",
         "packaged good",
         "general",
-        "other"
+        "other",
+        "packaged commodities"
     }
 
     if category in packaged_categories:
-        return "Packaged Commodities"
-
-    if category == "packaged commodities":
         return "Packaged Commodities"
 
     return "Packaged Commodities"
@@ -160,20 +109,6 @@ def normalize_category(category):
 # ============================================================
 
 def get_field(data, field_name):
-    """
-    Gets a field from Gemini structured output.
-
-    Gemini format:
-
-        {
-            "mrp": {
-                "value": "249.00",
-                "status": "detected",
-                "evidence": "..."
-            }
-        }
-    """
-
     if not isinstance(data, dict):
         return None
 
@@ -202,11 +137,6 @@ def get_field_status(data, field_name):
 # ============================================================
 
 def normalize_field_name(field):
-    """
-    Converts database field names into the keys used
-    by Gemini structured extraction.
-    """
-
     if not field:
         return ""
 
@@ -262,20 +192,27 @@ def normalize_field_name(field):
 
 
 # ============================================================
+# RESULT BUILDER
+# ============================================================
+
+def build_result(rule, field, status, value, details):
+    return {
+        "rule_id": rule["rule_id"],
+        "field": field,
+        "status": status,
+        "value": value,
+        "requirement": rule.get("requirement"),
+        "details": details,
+        "source": rule.get("source_notes"),
+        "section": rule.get("applicable_section")
+    }
+
+
+# ============================================================
 # RULE CHECK
 # ============================================================
 
 def check_rule(rule, structured_data):
-    """
-    Performs a basic compliance check for one database rule.
-
-    Important:
-    The database tells us WHICH field and requirement
-    should be checked.
-
-    We do not blindly require every possible field.
-    """
-
     field = normalize_field_name(rule.get("field"))
 
     requirement_type = (
@@ -298,192 +235,231 @@ def check_rule(rule, structured_data):
     status = get_field_status(structured_data, field)
 
     # --------------------------------------------------------
-    # If the field was not detected
+    # Missing field
     # --------------------------------------------------------
 
     if value is None or str(value).strip() == "":
-
-        # Conditional rules cannot be judged when their
-        # triggering information is unavailable.
-        if (
+        conditional = (
             "conditional" in requirement_type
             or "where applicable" in requirement_type
             or "if applicable" in requirement_type
-        ):
-            return {
-                "rule_id": rule["rule_id"],
-                "field": field,
-                "status": "not_applicable",
-                "value": None,
-                "requirement": requirement,
-                "details": "Required condition was not established.",
-                "source": rule.get("source_notes")
-            }
+            or bool(exception)
+        )
 
-        return {
-            "rule_id": rule["rule_id"],
-            "field": field,
-            "status": "review",
-            "value": None,
-            "requirement": requirement,
-            "details": "Required declaration was not detected.",
-            "source": rule.get("source_notes")
-        }
+        if conditional:
+            return build_result(
+                rule,
+                field,
+                "not_applicable",
+                None,
+                "Condition for this requirement was not established."
+            )
+
+        return build_result(
+            rule,
+            field,
+            "review",
+            None,
+            "Required declaration was not detected."
+        )
 
     # --------------------------------------------------------
-    # Gemini already flagged uncertainty
+    # Gemini uncertainty
     # --------------------------------------------------------
 
     if status == "needs_verification":
-
-        return {
-            "rule_id": rule["rule_id"],
-            "field": field,
-            "status": "review",
-            "value": value,
-            "requirement": requirement,
-            "details": "Value was extracted but requires verification.",
-            "source": rule.get("source_notes")
-        }
+        return build_result(
+            rule,
+            field,
+            "review",
+            value,
+            "Value was extracted but requires verification."
+        )
 
     # --------------------------------------------------------
-    # Specific engine checks
+    # MRP
     # --------------------------------------------------------
 
-    if engine_check:
-
-        # MRP
-        if "mrp" in engine_check:
-
-            if value:
-                return {
-                    "rule_id": rule["rule_id"],
-                    "field": field,
-                    "status": "pass",
-                    "value": value,
-                    "requirement": requirement,
-                    "details": "MRP value detected.",
-                    "source": rule.get("source_notes")
-                }
-
-        # NET QUANTITY
-        elif (
-            "quantity" in engine_check
-            or "net_quantity" in engine_check
-        ):
-
-            if value:
-                return {
-                    "rule_id": rule["rule_id"],
-                    "field": field,
-                    "status": "pass",
-                    "value": value,
-                    "requirement": requirement,
-                    "details": "Net quantity declaration detected.",
-                    "source": rule.get("source_notes")
-                }
-
-        # MANUFACTURER
-        elif "manufacturer" in engine_check:
-
-            if value:
-                return {
-                    "rule_id": rule["rule_id"],
-                    "field": field,
-                    "status": "pass",
-                    "value": value,
-                    "requirement": requirement,
-                    "details": "Manufacturer declaration detected.",
-                    "source": rule.get("source_notes")
-                }
-
-        # PACKER
-        elif "packer" in engine_check:
-
-            if value:
-                return {
-                    "rule_id": rule["rule_id"],
-                    "field": field,
-                    "status": "pass",
-                    "value": value,
-                    "requirement": requirement,
-                    "details": "Packer declaration detected.",
-                    "source": rule.get("source_notes")
-                }
-
-        # IMPORTER
-        elif "importer" in engine_check:
-
-            if value:
-                return {
-                    "rule_id": rule["rule_id"],
-                    "field": field,
-                    "status": "pass",
-                    "value": value,
-                    "requirement": requirement,
-                    "details": "Importer declaration detected.",
-                    "source": rule.get("source_notes")
-                }
-
-        # COUNTRY OF ORIGIN
-        elif "country" in engine_check:
-
-            if value:
-                return {
-                    "rule_id": rule["rule_id"],
-                    "field": field,
-                    "status": "pass",
-                    "value": value,
-                    "requirement": requirement,
-                    "details": "Country of origin declaration detected.",
-                    "source": rule.get("source_notes")
-                }
-
-        # CONSUMER CARE
-        elif "consumer" in engine_check:
-
-            if value:
-                return {
-                    "rule_id": rule["rule_id"],
-                    "field": field,
-                    "status": "pass",
-                    "value": value,
-                    "requirement": requirement,
-                    "details": "Consumer care information detected.",
-                    "source": rule.get("source_notes")
-                }
-
-        # DATE
-        elif (
-            "date" in engine_check
-            or "expiry" in engine_check
-            or "best_before" in engine_check
-        ):
-
-            if value:
-                return {
-                    "rule_id": rule["rule_id"],
-                    "field": field,
-                    "status": "pass",
-                    "value": value,
-                    "requirement": requirement,
-                    "details": "Required date declaration detected.",
-                    "source": rule.get("source_notes")
-                }
+    if "mrp" in engine_check:
+        return build_result(
+            rule,
+            field,
+            "pass",
+            value,
+            "MRP value detected."
+        )
 
     # --------------------------------------------------------
-    # Generic fallback
+    # NET QUANTITY
     # --------------------------------------------------------
 
-    return {
-        "rule_id": rule["rule_id"],
-        "field": field,
-        "status": "pass",
-        "value": value,
-        "requirement": requirement,
-        "details": "Required information detected.",
-        "source": rule.get("source_notes")
-    }
+    if (
+        "quantity" in engine_check
+        or "net_quantity" in engine_check
+    ):
+        return build_result(
+            rule,
+            field,
+            "pass",
+            value,
+            "Net quantity declaration detected."
+        )
+
+    # --------------------------------------------------------
+    # MANUFACTURER
+    # --------------------------------------------------------
+
+    if (
+        "manufacturer" in engine_check
+        or "manufactured_by" in engine_check
+    ):
+        return build_result(
+            rule,
+            field,
+            "pass",
+            value,
+            "Manufacturer declaration detected."
+        )
+
+    # --------------------------------------------------------
+    # PACKER
+    # --------------------------------------------------------
+
+    if "packer" in engine_check:
+        return build_result(
+            rule,
+            field,
+            "pass",
+            value,
+            "Packer declaration detected."
+        )
+
+    # --------------------------------------------------------
+    # IMPORTER
+    # --------------------------------------------------------
+
+    if "importer" in engine_check:
+        return build_result(
+            rule,
+            field,
+            "pass",
+            value,
+            "Importer declaration detected."
+        )
+
+    # --------------------------------------------------------
+    # COUNTRY OF ORIGIN
+    # --------------------------------------------------------
+
+    if "country" in engine_check:
+        return build_result(
+            rule,
+            field,
+            "pass",
+            value,
+            "Country of origin declaration detected."
+        )
+
+    # --------------------------------------------------------
+    # CONSUMER CARE
+    # --------------------------------------------------------
+
+    if "consumer" in engine_check:
+        return build_result(
+            rule,
+            field,
+            "pass",
+            value,
+            "Consumer care information detected."
+        )
+
+    # --------------------------------------------------------
+    # DATE
+    # --------------------------------------------------------
+
+    if (
+        "date" in engine_check
+        or "expiry" in engine_check
+        or "best_before" in engine_check
+    ):
+        return build_result(
+            rule,
+            field,
+            "pass",
+            value,
+            "Required date declaration detected."
+        )
+
+    # --------------------------------------------------------
+    # BATCH NUMBER
+    # --------------------------------------------------------
+
+    if (
+        "batch" in engine_check
+        or "lot" in engine_check
+    ):
+        return build_result(
+            rule,
+            field,
+            "pass",
+            value,
+            "Batch or lot information detected."
+        )
+
+    # --------------------------------------------------------
+    # UNIT SALE PRICE
+    # --------------------------------------------------------
+
+    if (
+        "unit_sale_price" in engine_check
+        or "unit sale price" in engine_check
+        or "usp" in engine_check
+    ):
+        return build_result(
+            rule,
+            field,
+            "pass",
+            value,
+            "Unit sale price information detected."
+        )
+
+    # --------------------------------------------------------
+    # PRODUCT NAME
+    # --------------------------------------------------------
+
+    if (
+        "product_name" in engine_check
+        or "product name" in engine_check
+        or "name" == engine_check
+    ):
+        return build_result(
+            rule,
+            field,
+            "pass",
+            value,
+            "Product name detected."
+        )
+
+    # --------------------------------------------------------
+    # GENERIC RULE
+    # --------------------------------------------------------
+
+    if value:
+        return build_result(
+            rule,
+            field,
+            "pass",
+            value,
+            "Required information detected."
+        )
+
+    return build_result(
+        rule,
+        field,
+        "review",
+        value,
+        "Unable to determine compliance for this requirement."
+    )
 
 
 # ============================================================
@@ -491,32 +467,13 @@ def check_rule(rule, structured_data):
 # ============================================================
 
 def run_compliance_check(structured_data, category):
-    """
-    Main compliance engine.
-
-    Input:
-        structured_data = Gemini JSON
-        category = Gemini detected category
-
-    Output:
-        structured compliance result
-    """
-
     try:
-
         normalized_category = normalize_category(category)
-
-        # ----------------------------------------------------
-        # Load Packaged Commodities rules
-        # ----------------------------------------------------
-
         rules = load_rules(normalized_category)
 
         if not rules:
-
             return {
                 "overall_status": "NO_RULES_FOUND",
-                "score": 0,
                 "category": normalized_category,
                 "checks": [],
                 "summary": (
@@ -525,24 +482,14 @@ def run_compliance_check(structured_data, category):
                 )
             }
 
-        # ----------------------------------------------------
-        # Run every applicable rule
-        # ----------------------------------------------------
-
         checks = []
 
         for rule in rules:
-
             result = check_rule(
                 rule,
                 structured_data
             )
-
             checks.append(result)
-
-        # ----------------------------------------------------
-        # Calculate score
-        # ----------------------------------------------------
 
         applicable_checks = [
             check
@@ -568,52 +515,30 @@ def run_compliance_check(structured_data, category):
             if check["status"] == "review"
         ]
 
-        total = len(applicable_checks)
-
-        if total == 0:
-            score = 0
-        else:
-            score = round(
-                (len(passed) / total) * 100
-            )
-
-        # ----------------------------------------------------
-        # Overall status
-        # ----------------------------------------------------
-
         if failed:
             overall_status = "NON_COMPLIANT"
-
         elif review:
             overall_status = "REVIEW_REQUIRED"
-
         else:
             overall_status = "COMPLIANT"
-
-        # ----------------------------------------------------
-        # Summary
-        # ----------------------------------------------------
 
         summary = (
             f"{len(passed)} passed, "
             f"{len(failed)} failed, "
             f"{len(review)} require verification "
-            f"out of {total} applicable checks."
+            f"out of {len(applicable_checks)} applicable checks."
         )
 
         return {
             "overall_status": overall_status,
-            "score": score,
             "category": normalized_category,
             "checks": checks,
             "summary": summary
         }
 
     except Exception as e:
-
         return {
             "overall_status": "ENGINE_ERROR",
-            "score": 0,
             "category": category,
             "checks": [],
             "summary": "Could not load compliance rules from database.",
