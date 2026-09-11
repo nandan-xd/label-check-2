@@ -345,10 +345,10 @@
         {% set checks = compliance_results.checks or [] %}
 
         <div class="compliance-summary">
-            {% set pass_count = checks | selectattr("status", "equalto", "PASS") | list | length %}
-            {% set fail_count = checks | selectattr("status", "equalto", "FAIL") | list | length %}
-            {% set review_count = checks | selectattr("status", "equalto", "REVIEW") | list | length %}
-            {% set na_count = checks | selectattr("status", "equalto", "NOT_APPLICABLE") | list | length %}
+            {% set pass_count = checks | selectattr("status", "equalto", "pass") | list | length %}
+            {% set fail_count = checks | selectattr("status", "equalto", "fail") | list | length %}
+            {% set review_count = checks | selectattr("status", "equalto", "review") | list | length %}
+            {% set na_count = checks | selectattr("status", "equalto", "not_applicable") | list | length %}
 
             <div class="summary-box"><strong>{{ pass_count }}</strong> Passed</div>
             <div class="summary-box"><strong>{{ fail_count }}</strong> Failed</div>
@@ -374,14 +374,14 @@
                     </td>
 
                     <td>
-                        {% if check.status == "PASS" %}
+                        {% if check.status == "pass" %}
                             <span class="pass">PASS</span>
-                        {% elif check.status == "FAIL" %}
+                        {% elif check.status == "fail" %}
                             <span class="fail">FAIL</span>
-                        {% elif check.status == "REVIEW" %}
+                        {% elif check.status == "review" %}
                             <span class="review">REVIEW</span>
                         {% else %}
-                            <span class="na">{{ check.status }}</span>
+                            <span class="na">{{ check.status | upper }}</span>
                         {% endif %}
                     </td>
 
