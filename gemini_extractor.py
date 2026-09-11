@@ -4,7 +4,9 @@ from dotenv import load_dotenv
 from google import genai
 from pydantic import BaseModel, Field
 
+
 load_dotenv()
+
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
@@ -35,7 +37,6 @@ class FieldResult(BaseModel):
 
 
 class LabelData(BaseModel):
-
     product_name: FieldResult
     category: FieldResult
 
@@ -88,7 +89,6 @@ IMPORTANT RULES:
 9. Do not make any legal compliance decision.
 10. For product_name, combine brand + product type only when both are clearly
 present in the OCR text and the relationship is obvious.
-
 11. Do not invent a specific product variant, formulation, flavor, model,
 or product name that is not present in the OCR text.
 
@@ -172,8 +172,6 @@ unknown
 EVIDENCE:
 Briefly explain what OCR text caused the field to be extracted.
 
-OCR TEXT:
-
 STATUS RULES:
 
 Use "detected" when the OCR text provides strong contextual evidence for
@@ -227,6 +225,7 @@ recognition errors when the intended meaning is clear.
 
 Do not invent missing information. Only correct an OCR error when the
 correction is strongly supported by the surrounding context.
+
 IMPORTANT LABEL LAYOUT RULES:
 
 The OCR text may not preserve the physical layout of the package correctly.
@@ -278,8 +277,7 @@ R, Rs, #, 3, or other symbols.
 
 When a price is clearly associated with "MRP" and the surrounding OCR strongly
 supports that relationship, normalize the value to the numeric price and do not
-mark it as needs_verification merely because the currency symbol was
-misread.
+mark it as needs_verification merely because the currency symbol was misread.
 
 For example:
 "MRP(R) #440.00"
@@ -313,7 +311,6 @@ merely because OCR formatting or punctuation is imperfect.
 # =========================================================
 
 def extract_structured_data(ocr_text):
-
     if not GEMINI_API_KEY:
         raise ValueError(
             "GEMINI_API_KEY is not configured."
@@ -328,17 +325,23 @@ def extract_structured_data(ocr_text):
         api_key=GEMINI_API_KEY
     )
 
-    prompt = PROMPT + "\n\n" + ocr_text
+    prompt = PROMPT + "\n\nOCR TEXT:\n\n" + ocr_text
 
-    interaction = client.interactions.create(
-        model=GEMINI_MODEL,
-        input=prompt,
-        response_format={
-            "type": "text",
-            "mime_type": "application/json",
-            "schema": LabelData.model_json_schema()
-        }
-    )
+    try:
+        interaction = client.interactions.create(
+            model=GEMINI_MODEL,
+            input=prompt,
+            response_format={
+                "type": "text",
+                "mime_type": "application/json",
+                "schema": LabelData.model_json_schema()
+            }
+        )
+
+    except Exception as e:
+        raise RuntimeError(
+            f"Gemini API error: {e}"
+        ) from e
 
     if not interaction.output_text:
         raise ValueError(
@@ -346,13 +349,11 @@ def extract_structured_data(ocr_text):
         )
 
     try:
-
         result = LabelData.model_validate_json(
             interaction.output_text
         )
 
     except Exception as e:
-
         raise ValueError(
             f"Could not parse Gemini JSON: {e}\n\n"
             f"Gemini output:\n{interaction.output_text}"

@@ -1,68 +1,105 @@
-# LabelCheck
+import os
+import requests
+import time
+from dotenv import load_dotenv
 
-LabelCheck is an AI-assisted product label verification system designed to extract important information from packaged commodity labels and evaluate the extracted information against predefined regulatory requirements.
 
-## Features
+load_dotenv()
 
-- Product label image upload
-- OCR-based text extraction
-- AI-assisted structured data extraction
-- Extraction of important label information such as:
-  - Product name
-  - Category
-  - MRP
-  - Net quantity
-  - Manufacturing date
-  - Expiry / Best Before date
-  - Batch number
-  - Manufacturer
-  - Packer
-  - Importer
-  - Consumer care details
-  - Country of origin
-  - Unit sale price
-  - FSSAI licence number
-- Structured JSON representation of extracted information
-- Evidence-based extraction with confidence/status indicators
-- Compliance checking against predefined regulatory rules
-- PostgreSQL database support for storing compliance rules
-- Support for multiple product-label images
 
-## Technology Stack
+OCR_API_KEY = os.getenv("OCR_API_KEY")
 
-### Backend
-- Python
-- Flask
 
-### OCR
-- OCR-based text extraction
+def extract_text(image_file):
+    if not OCR_API_KEY:
+        raise ValueError("OCR_API_KEY is not configured.")
 
-### AI
-- Google Gemini API
+    image_file.seek(0)
 
-### Database
-- PostgreSQL
-- Neon PostgreSQL
+    file_content = image_file.read()
 
-### Other
-- REST APIs
-- JSON
-- Regular expressions for text processing and validation
-- Environment variables for configuration
+    max_retries = 3
 
-## Project Structure
+    for attempt in range(max_retries):
 
-```text
-LabelCheck/
-│
-├── app.py
-├── ocr_service.py
-├── gemini_extractor.py
-├── compliance_engine.py
-├── requirements.txt
-├── .env
-│
-├── templates/
-│   └── index.html
-│
-└── README.md
+        try:
+            files = {
+                "file": (
+                    image_file.filename,
+                    file_content,
+                    image_file.mimetype or "image/jpeg"
+                )
+            }
+
+            data = {
+                "apikey": OCR_API_KEY,
+                "language": "eng",
+                "isOverlayRequired": "false",
+                "OCREngine": "2"
+            }
+
+            response = requests.post(
+                "https://api.ocr.space/parse/image",
+                files=files,
+                data=data,
+                timeout=30
+            )
+
+            # Temporary OCR.space problem
+            if response.status_code == 503:
+
+                if attempt < max_retries - 1:
+                    time.sleep(2 * (attempt + 1))
+                    continue
+
+                raise ValueError(
+                    "OCR service is temporarily unavailable. "
+                    "Please try again in a few seconds."
+                )
+
+            response.raise_for_status()
+
+            result = response.json()
+
+            if result.get("IsErroredOnProcessing"):
+                raise ValueError(
+                    str(
+                        result.get(
+                            "ErrorMessage",
+                            "OCR processing failed."
+                        )
+                    )
+                )
+
+            parsed_results = result.get(
+                "ParsedResults",
+                []
+            )
+
+            if not parsed_results:
+                return ""
+
+            text_parts = []
+
+            for parsed_result in parsed_results:
+                text = parsed_result.get(
+                    "ParsedText",
+                    ""
+                )
+
+                if text:
+                    text_parts.append(text)
+
+            return "\n".join(text_parts)
+
+        except requests.RequestException as e:
+
+            if attempt < max_retries - 1:
+                time.sleep(2 * (attempt + 1))
+                continue
+
+            raise ValueError(
+                f"OCR service unavailable: {e}"
+            ) from e
+
+    return ""
