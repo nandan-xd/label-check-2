@@ -68,6 +68,14 @@ def extract_text(image_file):
                     "Please try again in a few seconds."
                 )
 
+            if response.status_code == 413:
+
+                raise ValueError(
+                    "This image is too large for the OCR service "
+                    "to process. Please retake the photo or use a "
+                    "smaller image."
+                )
+
             response.raise_for_status()
 
             result = response.json()

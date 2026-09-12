@@ -20,6 +20,25 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
 app = Flask(__name__)
 
+# Hard safety cap on the whole request body (all images combined).
+# The front-end already compresses each photo to well under 1 MB
+# before upload, so a normal scan never gets close to this. This
+# just stops a truly oversized request from crashing the server
+# with an unhandled error and turns it into a friendly message.
+app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20 MB
+
+
+@app.errorhandler(413)
+def handle_payload_too_large(_error):
+    return render_template(
+        "index.html",
+        error=(
+            "That upload was too large. Please try again — "
+            "images are compressed automatically, but very large "
+            "batches of photos can still exceed the limit."
+        )
+    ), 413
+
 
 # =========================================================
 # ADVANCED VERIFICATIONS
